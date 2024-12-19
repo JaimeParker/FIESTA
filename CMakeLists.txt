@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(fiesta)
 
+set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS} -O3 -Wall -pthread") # -Wextra -Werror
+set(CMAKE_BUILD_TYPE "RELEASE")
+
 find_package(catkin REQUIRED COMPONENTS
         roscpp
         std_msgs
@@ -16,7 +19,10 @@ find_package(OpenCV REQUIRED)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
 catkin_package(
-  INCLUDE_DIRS include
+        INCLUDE_DIRS include
+        LIBRARIES fiesta_lib
+        CATKIN_DEPENDS roscpp std_msgs nav_msgs visualization_msgs tf cv_bridge
+        DEPENDS EIGEN3 PCL OpenCV
 )
 
 
@@ -33,41 +39,30 @@ include_directories(
 
 link_directories(${PCL_LIBRARY_DIRS})
 
-set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS} -O3 -Wall -pthread") # -Wextra -Werror
-set(CMAKE_BUILD_TYPE "RELEASE")
-#add_executable(test_esdf_map
-#        include/ESDFMap.h
-#        src/ESDFMap.cpp
-#        include/timing.h
-#        src/timing.cc
-#        test/test_ESDF_Map.cpp
-#        )
-#target_link_libraries(test_esdf_map
-#        ${catkin_LIBRARIES}
-#        )
-#FIND_PACKAGE( OpenMP REQUIRED)
-#if(OPENMP_FOUND)
-#message("OPENMP FOUND")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#endif()
-
-add_executable(test_fiesta
-        include/parameters.h
-        src/parameters.cpp
-        include/timing.h
-        src/timing.cc
-        include/raycast.h
-        src/raycast.cpp
-        include/ESDFMap.h
+add_library(fiesta_lib
         src/ESDFMap.cpp
-        include/Fiesta.h
-        test/test_fiesta.cpp
-        )
-target_link_libraries(test_fiesta
+        src/raycast.cpp
+        src/parameters.cpp
+        src/timing.cc
+)
+
+target_include_directories(fiesta_lib PUBLIC
+        ${catkin_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
+        ${Eigen3_INCLUDE_DIRS}
+)
+
+target_link_libraries(fiesta_lib
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
         ${OpenCV_LIBS}
-        )
+)
+
+add_executable(test_fiesta 
+        test/test_fiesta.cpp
+)
+target_link_libraries(test_fiesta
+        fiesta_lib
+)
 
